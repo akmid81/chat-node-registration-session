@@ -1,5 +1,5 @@
 const MongoStore = require('connect-mongo')
-const mongoUrl = 'mongodb+srv://akmid81:akmid81-@cluster0.968dx.mongodb.net/users?retryWrites=true&w=majority'
+const mongoUrl = 'mongoURL path'
 
 const sessionCfg = {
    secret: "dfkgjhdfkgj",
