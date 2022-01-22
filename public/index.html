@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+   <meta charset="UTF-8">
+   <meta http-equiv="X-UA-Compatible" content="IE=edge">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Socket.io</title>
+   <script src="/socket.io/socket.io.js"></script>
+   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+      integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+   <style>
+      body {
+         background-color: #c8e3c9;
+      }
+
+      .container {
+         margin-top: 1rem;
+      }
+
+      form#sms {
+         display: flex;
+         justify-content: space-around;
+      }
+
+      ul#chat {
+         height: 400px;
+         background-color: white;
+         overflow: auto;
+         padding: .5rem;
+      }
+
+      li {
+         list-style-type: none;
+      }
+
+      .col-md-3 {
+         display: flex;
+         flex-direction: column;
+      }
+
+      .server {
+         font-style: italic;
+         text-align: right;
+      }
+   </style>
+</head>
+
+<body>
+   <div class="container">
+      <div class='row'>
+         <div class='col-md-1 col-0'></div>
+         <div class='col-md-3 col-12'>
+            <form class="row g-3 needs-validation" id='form' novalidate>
+               <div class="col-md-12">
+                  <label for="validationCustom01" class="form-label">Имя</label>
+                  <input type="text" class="form-control" name='name' id="validationCustom01" value="Иван" required>
+                  <div class="valid-feedback">
+                     Все хорошо!
+                  </div>
+               </div>
+               <div class="col-md-12">
+                  <label for="validationCustom01" class="form-label">Пароль</label>
+                  <input type="text" class="form-control" name='hspass' id="validationCustom01" value="123" required>
+                  <div class="valid-feedback">
+                     Все хорошо!
+                  </div>
+               </div>
+               <div class="col-md-12">
+                  <button class="btn btn-primary" type="submit">Войти</button>
+               </div>
+            </form>
+            <button class="btn btn-primary" id='logout' type="button" hidden>Выйти</button>
+         </div>
+         <div class='col-md-7 col-12'>
+            <h1>Супер-чат</h1>
+            <ul id="chat"></ul>
+            <form id="sms">
+               <div class="col-md-8"><input class="form-control" type="text" name="msg"></div>
+               <div class="col-md-3"><input class="btn btn-primary" type="submit" value=">>"></div>
+            </form>
+         </div>
+
+      </div>
+   </div>
+
+
+
+   <script>
+      const form = document.querySelector('#form');
+      const sms = document.querySelector('#sms');
+      const logout = document.querySelector('#logout');
+      const chat = document.querySelector('#chat');
+      const socket = io();
+      form.addEventListener('submit', sendUser);
+      sms.addEventListener('submit', sendMsg);
+
+      socket.on("connect", () => {
+         console.log('Socket подключен');
+      });
+
+      socket.on("loginTrue", () => {
+         form.hidden = true;
+         form.removeEventListener('submit', sendUser);
+         logout.hidden = '';
+         logout.addEventListener('click', clearUser);
+         console.log('Успешная авторизация');
+         addMessage("Server", "Успешная авторизация");
+      });
+
+      socket.on('loginFalse', () => {
+         addMessage("Server", "Ошибка авторизации");
+      });
+
+      socket.on("logoutTrue", () => {
+         form.hidden = '';
+         form.addEventListener('submit', sendUser);
+         logout.hidden = true;
+         logout.removeEventListener('click', clearUser);
+         addMessage("Server", "Вы вышли из чата");
+         console.log('Вы вышли из чата');
+      });
+
+/*      socket.on('message', (data) => {
+         data = JSON.parse(data);
+         addMessage(data.name, data.message);
+      });*/
+      socket.on('message', (name, message) => {
+         addMessage(name, message);
+      });
+
+      function sendUser(e) {
+         e.preventDefault();
+
+         socket.emit('login', JSON.stringify({
+            name: form.elements.name.value,
+            hspass: form.elements.hspass.value
+         }));
+      }
+
+      function clearUser(e) {
+         e.preventDefault();
+         socket.emit('logout');
+      }
+
+      function addMessage(user, message) {
+         let li = document.createElement('li');
+         let msg = user + ": " + message;
+         li.innerText = msg;
+         if (user == 'Server') li.classList.add('server');
+         chat.prepend(li);
+      }
+
+      function sendMsg(e) {
+         e.preventDefault();
+         socket.emit('message', sms.elements.msg.value);
+         sms.reset();
+      }
+
+   </script>
+</body>
+
+</html>
